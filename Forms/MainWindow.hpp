@@ -18,6 +18,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // system includes
 #include <QMainWindow>
+#include <QFileDialog>
 
 
 
@@ -66,6 +67,8 @@ private:
 	///////////////////////////////////////////////////////////////////////////////
 
 	void refresh();
+	void saveToFile();
+	void loadFromFile();
 
 
 
@@ -75,11 +78,15 @@ private slots:
 	///////////////////////////////////////////////////////////////////////////////
 
 	// menues
+	void on_actionSave_triggered();
+	void on_actionLoad_triggered();
 	void on_actionExit_triggered();
 	void on_actionAbout_triggered();
 
 	// buttons
-	void on_pushButton_pressed();
-	void on_pushButton_released();
+	void on_pushButtonPressMe_pressed();
+	void on_pushButtonPressMe_released();
+	void on_pushButtonWriteToFile_clicked();
+	void on_pushButtonLoadFile_clicked();
 };
 #endif // MAINWINDOW_HPP

@@ -63,14 +63,57 @@ void MainWindow::refresh()
 //------------------------------------------------------------------------------
 {
 	if (_isBold == true) {
-		_ui->label->setStyleSheet("font-weight: bold; color: red");
-		_ui->label->setStyleSheet("QLabel {background-color: orange}");
+		_ui->labelHelloWorld->setStyleSheet("font-weight: bold; color: red");
+		_ui->labelHelloWorld->setStyleSheet("QLabel {background-color: orange}");
 	} else {
-		_ui->label->setStyleSheet("font-weight: 100; color: black");
-		_ui->label->setStyleSheet("QLabel {background-color: transparent}");
+		_ui->labelHelloWorld->setStyleSheet("font-weight: 100; color: black");
+		_ui->labelHelloWorld->setStyleSheet("QLabel {background-color: transparent}");
 	}
 }
 
+//------------------------------------------------------------------------------
+void MainWindow::saveToFile()
+//------------------------------------------------------------------------------
+{
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "/home/untitled", tr("Files (*)"));
+
+	if (fileName == nullptr) {
+		return;
+	}
+
+	QFile file(fileName);
+
+	if (!file.open(QIODevice::WriteOnly)) {
+		file.close();
+	} else {
+		file.write(_ui->textEditTestDataInput->toPlainText().toUtf8());
+		file.close();
+	}
+
+	// _ui->labelHelloWorld->setText(fileName);
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::loadFromFile()
+//------------------------------------------------------------------------------
+{
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "/home/", tr("Files (*)"));
+
+	if (fileName == nullptr) {
+		return;
+	}
+
+	QFile file(fileName);
+
+	if (!file.open(QIODevice::ReadOnly)) {
+		file.close();
+	} else {
+		_ui->textEditTestDataInput->setText(file.readAll());
+		file.close();
+	}
+
+	// _ui->labelHelloWorld->setText(fileName);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -93,7 +136,7 @@ void MainWindow::on_actionAbout_triggered()
 }
 
 //------------------------------------------------------------------------------
-void MainWindow::on_pushButton_pressed()
+void MainWindow::on_pushButtonPressMe_pressed()
 //------------------------------------------------------------------------------
 {
 	_isBold = !_isBold;
@@ -101,10 +144,38 @@ void MainWindow::on_pushButton_pressed()
 }
 
 //------------------------------------------------------------------------------
-void MainWindow::on_pushButton_released()
+void MainWindow::on_pushButtonPressMe_released()
 //------------------------------------------------------------------------------
 {
 	_isBold = !_isBold;
 	refresh();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_pushButtonWriteToFile_clicked()
+//------------------------------------------------------------------------------
+{
+	saveToFile();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionSave_triggered()
+//------------------------------------------------------------------------------
+{
+	saveToFile();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_pushButtonLoadFile_clicked()
+//------------------------------------------------------------------------------
+{
+	loadFromFile();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionLoad_triggered()
+//------------------------------------------------------------------------------
+{
+	loadFromFile();
 }
 

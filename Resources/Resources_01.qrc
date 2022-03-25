@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/logos">
         <file>Images/LOGO_SAM_100px.png</file>
+        <file>Images/disconnected.png</file>
+        <file>Images/connected.png</file>
     </qresource>
 </RCC>

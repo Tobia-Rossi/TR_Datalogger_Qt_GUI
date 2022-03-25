@@ -29,20 +29,23 @@
 //------------------------------------------------------------------------------
 MainWindow::MainWindow(QWidget *parent)
 //------------------------------------------------------------------------------
-	: QMainWindow(parent)
-	, _ui(new Ui::MainWindow),
-		_aboutWindow(new AboutWindow(this, APP_NAME, APP_VERSION, APP_AUTHOR))
+	: QMainWindow(parent),
+	  _ui(new Ui::MainWindow),
+	  _aboutWindow(new AboutWindow(this, APP_NAME, APP_VERSION, APP_AUTHOR)),
+	  _serial(new QSerialPort(this))
 {
 	_ui->setupUi(this);
 
 	// init attributes
-	_isBold = false;
 
 	// set title
 	setWindowTitle(APP_NAME "   v" APP_VERSION "   by " APP_AUTHOR);
 
-	// refresh GUI
-	refresh();
+	// refresh list of available serial ports
+	refreshSerialPortsList();
+
+	// connect signals
+	connect(_serial, &QSerialPort::readyRead, this, &MainWindow::readData);
 }
 
 //------------------------------------------------------------------------------
@@ -59,19 +62,6 @@ MainWindow::~MainWindow()
 ///////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
-void MainWindow::refresh()
-//------------------------------------------------------------------------------
-{
-	if (_isBold == true) {
-		_ui->labelHelloWorld->setStyleSheet("font-weight: bold; color: red");
-		_ui->labelHelloWorld->setStyleSheet("QLabel {background-color: orange}");
-	} else {
-		_ui->labelHelloWorld->setStyleSheet("font-weight: 100; color: black");
-		_ui->labelHelloWorld->setStyleSheet("QLabel {background-color: transparent}");
-	}
-}
-
-//------------------------------------------------------------------------------
 void MainWindow::saveToFile()
 //------------------------------------------------------------------------------
 {
@@ -86,11 +76,9 @@ void MainWindow::saveToFile()
 	if (!file.open(QIODevice::WriteOnly)) {
 		file.close();
 	} else {
-		file.write(_ui->textEditTestDataInput->toPlainText().toUtf8());
+		file.write(_ui->textEditConsole->toPlainText().toUtf8());
 		file.close();
 	}
-
-	// _ui->labelHelloWorld->setText(fileName);
 }
 
 //------------------------------------------------------------------------------
@@ -108,12 +96,148 @@ void MainWindow::loadFromFile()
 	if (!file.open(QIODevice::ReadOnly)) {
 		file.close();
 	} else {
-		_ui->textEditTestDataInput->setText(file.readAll());
+		_ui->textEditConsole->setText(file.readAll());
 		file.close();
 	}
-
-	// _ui->labelHelloWorld->setText(fileName);
 }
+
+//------------------------------------------------------------------------------
+void MainWindow::openSerialPort()
+//------------------------------------------------------------------------------
+{
+	_ui->comboBoxComPortSelection->setDisabled(true);
+	_ui->comboBoxBaudRateSelection->setDisabled(true);
+	_ui->comboBoxParityBitSelection->setDisabled(true);
+	_ui->comboBoxStopBitsSelection->setDisabled(true);
+
+	_serial->setPortName(_ui->comboBoxComPortSelection->currentText());
+	_serial->setBaudRate(_ui->comboBoxBaudRateSelection->currentText().toInt());
+	switch (_ui->comboBoxParityBitSelection->currentIndex()) {
+		case 0:
+			_serial->setParity(QSerialPort::NoParity);
+			break;
+
+		case 1:
+			_serial->setParity(QSerialPort::EvenParity);
+			break;
+
+		case 2:
+			_serial->setParity(QSerialPort::OddParity);
+			break;
+
+		case 3:
+			_serial->setParity(QSerialPort::SpaceParity);
+			break;
+
+		case 4:
+			_serial->setParity(QSerialPort::MarkParity);
+			break;
+
+		default:
+			_serial->setParity(QSerialPort::UnknownParity);
+			break;
+	}
+	switch (_ui->comboBoxStopBitsSelection->currentIndex()) {
+		case 0:
+			_serial->setStopBits(QSerialPort::OneStop);
+			break;
+
+		case 1:
+			_serial->setStopBits(QSerialPort::OneAndHalfStop);
+			break;
+
+		case 2:
+			_serial->setStopBits(QSerialPort::TwoStop);
+			break;
+
+		default:
+			_serial->setStopBits(QSerialPort::UnknownStopBits);
+			break;
+	}
+
+	if (_serial->open(QIODevice::ReadWrite)) {
+		_ui->textEditConsole->setReadOnly(true);
+	} else {
+		_ui->textEditConsole->setText("Error connecting to Serial Port!");
+
+		_ui->comboBoxComPortSelection->setDisabled(false);
+		_ui->comboBoxBaudRateSelection->setDisabled(false);
+		_ui->comboBoxParityBitSelection->setDisabled(false);
+		_ui->comboBoxStopBitsSelection->setDisabled(false);
+
+		_ui->textEditConsole->setReadOnly(false);
+	}
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::closeSerialPort()
+//------------------------------------------------------------------------------
+{
+	if (_serial->isOpen()) {
+		_serial->close();
+
+		_ui->comboBoxComPortSelection->setDisabled(false);
+		_ui->comboBoxBaudRateSelection->setDisabled(false);
+		_ui->comboBoxParityBitSelection->setDisabled(false);
+		_ui->comboBoxStopBitsSelection->setDisabled(false);
+
+		_ui->textEditConsole->setReadOnly(false);
+    }
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::writeData(const QByteArray &data)
+//------------------------------------------------------------------------------
+{
+    _serial->write(data);
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::readData()
+//------------------------------------------------------------------------------
+{
+    const QByteArray data = _serial->readAll();
+    _ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + data);
+    _ui->textEditConsole->verticalScrollBar()->setValue(_ui->textEditConsole->verticalScrollBar()->maximum());
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::refreshSerialPortsList()
+//------------------------------------------------------------------------------
+{
+	_ui->comboBoxComPortSelection->clear();
+
+	const auto infos = QSerialPortInfo::availablePorts();
+	for (const QSerialPortInfo &info : infos) {
+		QString s = info.portName();
+		_ui->comboBoxComPortSelection->addItem(s);
+	}
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::clearConsole()
+//------------------------------------------------------------------------------
+{
+	_ui->textEditConsole->clear();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::connectOrDisconnect()
+//------------------------------------------------------------------------------
+{
+	if (_serial->isOpen()) {
+		closeSerialPort();
+		_ui->pushButtonConnectOrDisconnectSerial->setText("Connect Serial Port");
+		_ui->actionConnectOrDisconnectSerial->setChecked(false);;
+		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/disconnected.png\"/></p></body></html>");
+	} else {
+		openSerialPort();
+		_ui->pushButtonConnectOrDisconnectSerial->setText("Disconnect Serial Port");
+		_ui->actionConnectOrDisconnectSerial->setChecked(true);
+		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/connected.png\"/></p></body></html>");
+	}
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,22 +257,6 @@ void MainWindow::on_actionAbout_triggered()
 {
 	_aboutWindow->setModal(true);
 	_aboutWindow->show();
-}
-
-//------------------------------------------------------------------------------
-void MainWindow::on_pushButtonPressMe_pressed()
-//------------------------------------------------------------------------------
-{
-	_isBold = !_isBold;
-	refresh();
-}
-
-//------------------------------------------------------------------------------
-void MainWindow::on_pushButtonPressMe_released()
-//------------------------------------------------------------------------------
-{
-	_isBold = !_isBold;
-	refresh();
 }
 
 //------------------------------------------------------------------------------
@@ -179,3 +287,37 @@ void MainWindow::on_actionLoad_triggered()
 	loadFromFile();
 }
 
+//------------------------------------------------------------------------------
+void MainWindow::on_pushButtonConnectOrDisconnectSerial_clicked()
+//------------------------------------------------------------------------------
+{
+	connectOrDisconnect();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionConnectOrDisconnectSerial_triggered()
+//------------------------------------------------------------------------------
+{
+	connectOrDisconnect();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_pushButtonRefreshComList_clicked()
+//------------------------------------------------------------------------------
+{
+	refreshSerialPortsList();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_pushButtonClearConsole_clicked()
+//------------------------------------------------------------------------------
+{
+	clearConsole();
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionClear_Console_triggered()
+//------------------------------------------------------------------------------
+{
+	clearConsole();
+}

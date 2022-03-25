@@ -1,5 +1,5 @@
 NAME = "TR Datalogger"
-VERSION = 1.0-1
+VERSION = 1.0-4
 AUTHOR = "Tobia Rossi"
 
 DEFINES += APP_NAME=\"\\\"$${NAME}\\\"\"
@@ -7,7 +7,7 @@ DEFINES += APP_VERSION=\\\"$${VERSION}\\\"
 DEFINES += APP_AUTHOR=\"\\\"$${AUTHOR}\\\"\"
 
 
-QT       += core gui
+QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

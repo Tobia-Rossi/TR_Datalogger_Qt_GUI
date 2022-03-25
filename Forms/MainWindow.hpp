@@ -19,6 +19,9 @@
 // system includes
 #include <QMainWindow>
 #include <QFileDialog>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#include <QScrollBar>
 
 
 
@@ -48,18 +51,20 @@ public:
 
 private:
 	///////////////////////////////////////////////////////////////////////////////
-	// attributes
-	///////////////////////////////////////////////////////////////////////////////
-
-	bool _isBold;
-
-
-	///////////////////////////////////////////////////////////////////////////////
 	// Forms
 	///////////////////////////////////////////////////////////////////////////////
 
 	Ui::MainWindow *_ui;
 	AboutWindow *_aboutWindow;
+
+
+
+	///////////////////////////////////////////////////////////////////////////////
+	// attributes
+	///////////////////////////////////////////////////////////////////////////////
+
+	QSerialPort *_serial = nullptr;
+
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -69,6 +74,13 @@ private:
 	void refresh();
 	void saveToFile();
 	void loadFromFile();
+	void refreshSerialPortsList();
+
+	void openSerialPort();
+	void closeSerialPort();
+	void writeData(const QByteArray &data);
+	void clearConsole();
+	void connectOrDisconnect();
 
 
 
@@ -77,16 +89,22 @@ private slots:
 	// events
 	///////////////////////////////////////////////////////////////////////////////
 
+	// Serial
+	void readData();
+
 	// menues
 	void on_actionSave_triggered();
 	void on_actionLoad_triggered();
 	void on_actionExit_triggered();
 	void on_actionAbout_triggered();
+	void on_actionConnectOrDisconnectSerial_triggered();
+	void on_actionClear_Console_triggered();
 
 	// buttons
-	void on_pushButtonPressMe_pressed();
-	void on_pushButtonPressMe_released();
 	void on_pushButtonWriteToFile_clicked();
 	void on_pushButtonLoadFile_clicked();
+	void on_pushButtonConnectOrDisconnectSerial_clicked();
+	void on_pushButtonRefreshComList_clicked();
+	void on_pushButtonClearConsole_clicked();
 };
 #endif // MAINWINDOW_HPP

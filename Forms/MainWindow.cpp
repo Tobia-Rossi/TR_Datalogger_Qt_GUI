@@ -321,3 +321,26 @@ void MainWindow::on_actionClear_Console_triggered()
 {
 	clearConsole();
 }
+
+//------------------------------------------------------------------------------
+void MainWindow::on_checkBoxLiveMode_stateChanged(int arg1)
+//------------------------------------------------------------------------------
+{
+	if (arg1 == Qt::Unchecked) {
+		_ui->actionLive_Mode->setChecked(false);
+	} else if (arg1 == Qt::Checked) {
+		_ui->actionLive_Mode->setChecked(true);
+	}
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionLive_Mode_triggered()
+//------------------------------------------------------------------------------
+{
+	if (_ui->actionLive_Mode->isChecked()) {
+		_ui->checkBoxLiveMode->setCheckState(Qt::Checked);
+	} else {
+		_ui->checkBoxLiveMode->setCheckState(Qt::Unchecked);
+	}
+}
+

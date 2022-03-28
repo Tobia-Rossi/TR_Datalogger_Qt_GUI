@@ -106,5 +106,7 @@ private slots:
 	void on_pushButtonConnectOrDisconnectSerial_clicked();
 	void on_pushButtonRefreshComList_clicked();
 	void on_pushButtonClearConsole_clicked();
+	void on_checkBoxLiveMode_stateChanged(int arg1);
+	void on_actionLive_Mode_triggered();
 };
 #endif // MAINWINDOW_HPP

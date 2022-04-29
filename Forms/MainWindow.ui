@@ -58,9 +58,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>170</y>
+      <y>340</y>
       <width>561</width>
-      <height>341</height>
+      <height>171</height>
      </rect>
     </property>
     <property name="font">
@@ -339,6 +339,27 @@
     </property>
     <property name="text">
      <string>Live Mode</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelTemperatureNow">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>170</y>
+      <width>501</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>50</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>TEMPERATURE</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>

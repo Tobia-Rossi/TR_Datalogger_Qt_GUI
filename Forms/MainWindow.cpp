@@ -236,10 +236,20 @@ void MainWindow::connectOrDisconnect()
 //------------------------------------------------------------------------------
 {
 	if (_serial->isOpen()) {
+		_timerTimeout->stop();
 		 closeSerialPort();
-		 _timerTimeout->stop();
+
+		 _ui->labelTemperatureNow->setText("TEMPERATURE");
+		 writeData(QByteArray(1, 0x04));
 	} else {
 		openSerialPort();
+
+		if (_ui->checkBoxLiveMode->isChecked()) {
+			writeData(QByteArray(1, 0x01));
+		} else {
+			writeData(QByteArray(1, 0x01));
+		}
+
 		_timerTimeout->start(TimeoutTimeMs);
 	}
 }
@@ -256,8 +266,9 @@ void MainWindow::readData()
 {
 	_timerTimeout->stop();
 	const QByteArray data = _serial->readAll();
-	_ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + data);
+	_ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + QString::number(data.toInt()));
 	_ui->textEditConsole->verticalScrollBar()->setValue(_ui->textEditConsole->verticalScrollBar()->maximum());
+	_ui->labelTemperatureNow->setText(QString::number(data.toInt()));
 	_timerTimeout->start(TimeoutTimeMs);
 }
 
@@ -266,15 +277,8 @@ void MainWindow::timeoutSerialPort()
 //------------------------------------------------------------------------------
 {
 	if (_serial->isOpen()) {
-		closeSerialPort();
-		_serialPortIsConnected = false;
-		refreshUi();
-
-		// Trows error
-		QMessageBox messageBox;
-		messageBox.setModal(true);
-		messageBox.critical(0,"Serial connection Error","The serial connection has timed out!");
-		messageBox.setFixedSize(500,200);
+		// Connectio timed out
+		_ui->labelTemperatureNow->setText("Waiting Data");
 	}
 }
 

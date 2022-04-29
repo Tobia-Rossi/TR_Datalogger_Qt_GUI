@@ -357,6 +357,7 @@
     </property>
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -371,6 +372,7 @@
     </property>
     <addaction name="actionConnectOrDisconnectSerial"/>
     <addaction name="actionLive_Mode"/>
+    <addaction name="separator"/>
     <addaction name="actionClear_Console"/>
    </widget>
    <addaction name="menuFile"/>
@@ -435,6 +437,11 @@
    </property>
    <property name="text">
     <string>Live Mode</string>
+   </property>
+  </action>
+  <action name="actionW_La_Figa">
+   <property name="text">
+    <string>W La Figa</string>
    </property>
   </action>
  </widget>

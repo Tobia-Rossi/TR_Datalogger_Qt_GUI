@@ -32,11 +32,14 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	  _ui(new Ui::MainWindow),
 	  _aboutWindow(new AboutWindow(this, APP_NAME, APP_VERSION, APP_AUTHOR)),
-	  _serial(new QSerialPort(this))
+	  _serial(new QSerialPort(this)),
+	  _timerTimeout(new QTimer(this))
 {
+	// init forms
 	_ui->setupUi(this);
 
 	// init attributes
+	_serialPortIsConnected = false;
 
 	// set title
 	setWindowTitle(APP_NAME "   v" APP_VERSION "   by " APP_AUTHOR);
@@ -46,6 +49,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	// connect signals
 	connect(_serial, &QSerialPort::readyRead, this, &MainWindow::readData);
+	connect(_timerTimeout, &QTimer::timeout, this, &MainWindow::timeoutSerialPort);
+
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +65,31 @@ MainWindow::~MainWindow()
 ///////////////////////////////////////////////////////////////////////////////
 // methods
 ///////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------
+void MainWindow::refreshUi()
+//------------------------------------------------------------------------------
+{
+	if (_serialPortIsConnected) {
+		_ui->pushButtonConnectOrDisconnectSerial->setText("Disconnect Serial Port");
+		_ui->actionConnectOrDisconnectSerial->setChecked(true);
+		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/connected.png\"/></p></body></html>");
+		_ui->comboBoxComPortSelection->setDisabled(true);
+		_ui->comboBoxBaudRateSelection->setDisabled(true);
+		_ui->comboBoxParityBitSelection->setDisabled(true);
+		_ui->comboBoxStopBitsSelection->setDisabled(true);
+		_ui->textEditConsole->setReadOnly(true);
+	} else {
+		_ui->pushButtonConnectOrDisconnectSerial->setText("Connect Serial Port");
+		_ui->actionConnectOrDisconnectSerial->setChecked(false);;
+		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/disconnected.png\"/></p></body></html>");
+		_ui->comboBoxComPortSelection->setDisabled(false);
+		_ui->comboBoxBaudRateSelection->setDisabled(false);
+		_ui->comboBoxParityBitSelection->setDisabled(false);
+		_ui->comboBoxStopBitsSelection->setDisabled(false);
+		_ui->textEditConsole->setReadOnly(false);
+	}
+}
 
 //------------------------------------------------------------------------------
 void MainWindow::saveToFile()
@@ -102,13 +132,11 @@ void MainWindow::loadFromFile()
 }
 
 //------------------------------------------------------------------------------
-void MainWindow::openSerialPort()
+bool MainWindow::openSerialPort()
 //------------------------------------------------------------------------------
 {
-	_ui->comboBoxComPortSelection->setDisabled(true);
-	_ui->comboBoxBaudRateSelection->setDisabled(true);
-	_ui->comboBoxParityBitSelection->setDisabled(true);
-	_ui->comboBoxStopBitsSelection->setDisabled(true);
+	_serialPortIsConnected = true;
+	refreshUi();
 
 	_serial->setPortName(_ui->comboBoxComPortSelection->currentText());
 	_serial->setBaudRate(_ui->comboBoxBaudRateSelection->currentText().toInt());
@@ -156,16 +184,12 @@ void MainWindow::openSerialPort()
 	}
 
 	if (_serial->open(QIODevice::ReadWrite)) {
-		_ui->textEditConsole->setReadOnly(true);
+		return true;
 	} else {
 		_ui->textEditConsole->setText("Error connecting to Serial Port!");
-
-		_ui->comboBoxComPortSelection->setDisabled(false);
-		_ui->comboBoxBaudRateSelection->setDisabled(false);
-		_ui->comboBoxParityBitSelection->setDisabled(false);
-		_ui->comboBoxStopBitsSelection->setDisabled(false);
-
-		_ui->textEditConsole->setReadOnly(false);
+		_serialPortIsConnected = true;
+		refreshUi();
+		return false;
 	}
 }
 
@@ -175,13 +199,8 @@ void MainWindow::closeSerialPort()
 {
 	if (_serial->isOpen()) {
 		_serial->close();
-
-		_ui->comboBoxComPortSelection->setDisabled(false);
-		_ui->comboBoxBaudRateSelection->setDisabled(false);
-		_ui->comboBoxParityBitSelection->setDisabled(false);
-		_ui->comboBoxStopBitsSelection->setDisabled(false);
-
-		_ui->textEditConsole->setReadOnly(false);
+		_serialPortIsConnected = false;
+		refreshUi();
     }
 }
 
@@ -190,15 +209,6 @@ void MainWindow::writeData(const QByteArray &data)
 //------------------------------------------------------------------------------
 {
     _serial->write(data);
-}
-
-//------------------------------------------------------------------------------
-void MainWindow::readData()
-//------------------------------------------------------------------------------
-{
-    const QByteArray data = _serial->readAll();
-    _ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + data);
-    _ui->textEditConsole->verticalScrollBar()->setValue(_ui->textEditConsole->verticalScrollBar()->maximum());
 }
 
 //------------------------------------------------------------------------------
@@ -226,15 +236,11 @@ void MainWindow::connectOrDisconnect()
 //------------------------------------------------------------------------------
 {
 	if (_serial->isOpen()) {
-		closeSerialPort();
-		_ui->pushButtonConnectOrDisconnectSerial->setText("Connect Serial Port");
-		_ui->actionConnectOrDisconnectSerial->setChecked(false);;
-		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/disconnected.png\"/></p></body></html>");
+		 closeSerialPort();
+		 _timerTimeout->stop();
 	} else {
 		openSerialPort();
-		_ui->pushButtonConnectOrDisconnectSerial->setText("Disconnect Serial Port");
-		_ui->actionConnectOrDisconnectSerial->setChecked(true);
-		_ui->iconConnectedOrDisconnected->setText("<html><head/><body><p><img src=\":/logos/Images/connected.png\"/></p></body></html>");
+		_timerTimeout->start(TimeoutTimeMs);
 	}
 }
 
@@ -243,6 +249,34 @@ void MainWindow::connectOrDisconnect()
 ///////////////////////////////////////////////////////////////////////////////
 // events
 ///////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------
+void MainWindow::readData()
+//------------------------------------------------------------------------------
+{
+	_timerTimeout->stop();
+	const QByteArray data = _serial->readAll();
+	_ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + data);
+	_ui->textEditConsole->verticalScrollBar()->setValue(_ui->textEditConsole->verticalScrollBar()->maximum());
+	_timerTimeout->start(TimeoutTimeMs);
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::timeoutSerialPort()
+//------------------------------------------------------------------------------
+{
+	if (_serial->isOpen()) {
+		closeSerialPort();
+		_serialPortIsConnected = false;
+		refreshUi();
+
+		// Trows error
+		QMessageBox messageBox;
+		messageBox.setModal(true);
+		messageBox.critical(0,"Serial connection Error","The serial connection has timed out!");
+		messageBox.setFixedSize(500,200);
+	}
+}
 
 //------------------------------------------------------------------------------
 void MainWindow::on_actionExit_triggered()

@@ -18,10 +18,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // system includes
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QFileDialog>
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QScrollBar>
+#include <QTimer>
 
 
 
@@ -64,6 +66,10 @@ private:
 	///////////////////////////////////////////////////////////////////////////////
 
 	QSerialPort *_serial = nullptr;
+	QTimer *_timerTimeout = nullptr;
+
+	bool _serialPortIsConnected;
+	const int TimeoutTimeMs = 1000;
 
 
 
@@ -71,12 +77,12 @@ private:
 	// methods
 	///////////////////////////////////////////////////////////////////////////////
 
-	void refresh();
+	void refreshUi();
 	void saveToFile();
 	void loadFromFile();
 	void refreshSerialPortsList();
 
-	void openSerialPort();
+	bool openSerialPort();
 	void closeSerialPort();
 	void writeData(const QByteArray &data);
 	void clearConsole();
@@ -91,6 +97,7 @@ private slots:
 
 	// Serial
 	void readData();
+	void timeoutSerialPort();
 
 	// menues
 	void on_actionSave_triggered();

@@ -69,7 +69,7 @@ private:
 	QTimer *_timerTimeout = nullptr;
 
 	bool _serialPortIsConnected;
-	const int TimeoutTimeMs = 1000;
+	const int TimeoutTimeMs = 100;
 
 
 
@@ -115,5 +115,6 @@ private slots:
 	void on_pushButtonClearConsole_clicked();
 	void on_checkBoxLiveMode_stateChanged(int arg1);
 	void on_actionLive_Mode_triggered();
+	void on_actionSerialPortInfo_triggered();
 };
 #endif // MAINWINDOW_HPP

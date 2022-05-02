@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>Application name</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../Resources/Resources_01.qrc">
+    <normaloff>:/logos/Images/LOGO_SAM_100px.png</normaloff>:/logos/Images/LOGO_SAM_100px.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="pushButtonConnectOrDisconnectSerial">
     <property name="geometry">
@@ -58,9 +62,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>340</y>
+      <y>350</y>
       <width>561</width>
-      <height>171</height>
+      <height>161</height>
      </rect>
     </property>
     <property name="font">
@@ -345,18 +349,39 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>170</y>
+      <y>220</y>
       <width>501</width>
       <height>121</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>50</pointsize>
+      <pointsize>45</pointsize>
      </font>
     </property>
     <property name="text">
-     <string>TEMPERATURE</string>
+     <string>Disconnected</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelTemperature">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>160</y>
+      <width>501</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>45</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Temperature:</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -394,11 +419,18 @@
     <addaction name="actionConnectOrDisconnectSerial"/>
     <addaction name="actionLive_Mode"/>
     <addaction name="separator"/>
+    <addaction name="actionSerialPortInfo"/>
+   </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
     <addaction name="actionClear_Console"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSerial_Port"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuDebug"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
@@ -460,12 +492,14 @@
     <string>Live Mode</string>
    </property>
   </action>
-  <action name="actionW_La_Figa">
+  <action name="actionSerialPortInfo">
    <property name="text">
-    <string>W La Figa</string>
+    <string>Info</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resources/Resources_01.qrc"/>
+ </resources>
  <connections/>
 </ui>

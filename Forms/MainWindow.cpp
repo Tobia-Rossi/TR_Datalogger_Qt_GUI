@@ -19,6 +19,13 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Constants
+const char LiveModeCommand = 0x01;
+const char GetFromEepromCommand = 0x01;
+// const char SetRtcTimeCommand = 0x03;
+const char StopLiveModeCommand = 0x04;
+
+///////////////////////////////////////////////////////////////////////////////
 // namespaces
 
 
@@ -187,7 +194,7 @@ bool MainWindow::openSerialPort()
 		return true;
 	} else {
 		_ui->textEditConsole->setText("Error connecting to Serial Port!");
-		_serialPortIsConnected = true;
+		_serialPortIsConnected = false;
 		refreshUi();
 		return false;
 	}
@@ -237,20 +244,22 @@ void MainWindow::connectOrDisconnect()
 {
 	if (_serial->isOpen()) {
 		_timerTimeout->stop();
-		 closeSerialPort();
+		writeData(QByteArray(1, StopLiveModeCommand));
+		closeSerialPort();
 
-		 _ui->labelTemperatureNow->setText("TEMPERATURE");
-		 writeData(QByteArray(1, 0x04));
+		_ui->labelTemperatureNow->setText("Disconnected");
 	} else {
-		openSerialPort();
+		if (openSerialPort()) {
+			if (_ui->checkBoxLiveMode->isChecked()) {
+				writeData(QByteArray(1, LiveModeCommand));
+			} else {
+				writeData(QByteArray(1, GetFromEepromCommand));
+			}
 
-		if (_ui->checkBoxLiveMode->isChecked()) {
-			writeData(QByteArray(1, 0x01));
+			_timerTimeout->start(TimeoutTimeMs);
 		} else {
-			writeData(QByteArray(1, 0x01));
-		}
 
-		_timerTimeout->start(TimeoutTimeMs);
+		}
 	}
 }
 
@@ -265,11 +274,13 @@ void MainWindow::readData()
 //------------------------------------------------------------------------------
 {
 	_timerTimeout->stop();
-	const QByteArray data = _serial->readAll();
-	_ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + QString::number(data.toInt()));
+	char * data = new char;
+	_serial->read(data, 1);
+	_ui->textEditConsole->setText(_ui->textEditConsole->toPlainText() + QString::number(data[0]) + "\n");
 	_ui->textEditConsole->verticalScrollBar()->setValue(_ui->textEditConsole->verticalScrollBar()->maximum());
-	_ui->labelTemperatureNow->setText(QString::number(data.toInt()));
+	_ui->labelTemperatureNow->setText(QString::number(data[0]) + "°C");
 	_timerTimeout->start(TimeoutTimeMs);
+	delete data;
 }
 
 //------------------------------------------------------------------------------
@@ -277,8 +288,17 @@ void MainWindow::timeoutSerialPort()
 //------------------------------------------------------------------------------
 {
 	if (_serial->isOpen()) {
-		// Connectio timed out
+		// Connection timed out
 		_ui->labelTemperatureNow->setText("Waiting Data");
+
+		// Tries reconnecting
+		if (_ui->checkBoxLiveMode->isChecked()) {
+			writeData(QByteArray(1, LiveModeCommand));
+		} else {
+			writeData(QByteArray(1, GetFromEepromCommand));
+		}
+
+		_timerTimeout->start(TimeoutTimeMs);
 	}
 }
 
@@ -380,5 +400,21 @@ void MainWindow::on_actionLive_Mode_triggered()
 	} else {
 		_ui->checkBoxLiveMode->setCheckState(Qt::Unchecked);
 	}
+}
+
+//------------------------------------------------------------------------------
+void MainWindow::on_actionSerialPortInfo_triggered()
+//------------------------------------------------------------------------------
+{
+	// TODO: control serial port exists
+	QSerialPortInfo info = QSerialPortInfo(_serial->objectName());
+
+	QMessageBox serialPortInfoWindow;
+	serialPortInfoWindow.setWindowTitle("Infos about " + _ui->comboBoxComPortSelection->currentText());
+	serialPortInfoWindow.setText(info.description());
+	serialPortInfoWindow.setIcon(QMessageBox::Information);
+	serialPortInfoWindow.setStandardButtons(QMessageBox::Close);
+	serialPortInfoWindow.setDefaultButton(QMessageBox::Close);
+	serialPortInfoWindow.exec();
 }
 
